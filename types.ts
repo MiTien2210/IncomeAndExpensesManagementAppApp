@@ -1,12 +1,11 @@
-
-export type RootStackParamList = {
-  ExpenseList: undefined;
-  AddExpense: undefined;
-  ExpenseDetail: { id: string }
-};
-
-export interface Expense {
+export type Expense = {
   id: string;
   title: string;
   amount: number;
-}
+};
+
+export type RootStackParamList = {
+  ExpenseList: undefined;
+  ExpenseDetail: { id: string };
+  AddExpense: { expense?: Expense };
+};
