@@ -52,6 +52,10 @@ export default function ExpenseListScreen() {
         title="Thêm khoản chi tiêu"
         onPress={() => navigation.navigate('AddExpense')}
       />
+      <Button
+        title="Xem thống kê"
+        onPress={() => navigation.navigate('ExpenseStatistics')}
+      />
       <Text style={styles.heading}>Danh sách chi tiêu</Text>
       <FlatList
         data={expenses}

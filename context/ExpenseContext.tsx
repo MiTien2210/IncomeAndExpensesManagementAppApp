@@ -53,6 +53,7 @@ export const ExpenseProvider: React.FC<ExpenseProviderProps> = ({ children }) =>
       id: new Date().toString(), // Hoặc bạn có thể sử dụng cách tạo ID riêng
       title,
       amount,
+      date: new Date().toISOString(), 
     };
     const updatedExpenses = [...expenses, newExpense];
     setExpenses(updatedExpenses);
