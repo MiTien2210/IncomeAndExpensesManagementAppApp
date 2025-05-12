@@ -17,5 +17,5 @@ buildscript {
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
     }
 }
-
+//add vector icon
 apply plugin: "com.facebook.react.rootproject"
