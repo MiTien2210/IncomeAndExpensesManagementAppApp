@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState, useContext } from 'react';
 import {
   View,
   TextInput,
@@ -8,28 +8,54 @@ import {
   ScrollView,
   Modal,
 } from 'react-native';
-import {Transaction} from '../types/types';
-import {getTransactions, saveTransactions} from '../storage/storage';
+import { Transaction } from '../types/types';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import uuid from 'react-native-uuid';
+import { useNavigation } from '@react-navigation/native';
+import { ParamList } from '../types/types';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { TransactionContext } from '../context/TransactionContext'; // Đường dẫn thay thế theo dự án của bạn
 
 const categoryList = {
-  income: ['Lương', 'Thưởng', 'Khác'],
-  expense: ['Ăn uống', 'Mua sắm', 'Đi lại', 'Khác'],
+  income: [
+    { id: 1, text: 'Lương', type: 'other', highlight: true, color: 'pink', typeColor: 'blue' },
+    { id: 2, text: 'Thưởng', type: 'other', highlight: true, color: 'blue', typeColor: 'blue' },
+    { id: 3, text: 'Khác', type: 'other', highlight: true, color: 'yellow', typeColor: 'blue' },
+  ],
+  expense: [
+    { id: 1, text: 'Ăn uống', type: 'Chi tiêu - Sinh hoạt', highlight: true, color: 'blue', typeColor: 'blue' },
+    { id: 2, text: 'Mua sắm', type: 'Chi phí phát sinh', highlight: true, color: 'red', typeColor: 'green' },
+    { id: 3, text: 'Đi lại', type: 'Chi tiêu - Sinh hoạt', highlight: true, color: 'pink', typeColor: 'blue' },
+    { id: 4, text: 'Chợ - Siêu thị', type: 'Chi tiêu - Sinh hoạt', highlight: false, color: 'orange', typeColor: 'blue' },
+    { id: 5, text: 'Hóa đơn', type: 'Chi tiêu - Sinh hoạt', highlight: true, color: 'yellow', typeColor: 'blue' },
+    { id: 6, text: 'Khác', type: 'other', highlight: true, color: 'green', typeColor: 'yellow' },
+  ],
 };
 
-const AddForm = ({type}: {type: 'income' | 'expense'}) => {
+const AddForm = ({ type }: { type: 'income' | 'expense' }) => {
   const [amount, setAmount] = useState('');
-  const [category, setCategory] = useState<string>(
-    type === 'income' ? 'Lương' : 'Ăn uống',
-  );
+  const [category, setCategory] = useState(categoryList[type][0]);
   const [note, setNote] = useState('');
-  const [date, setDate] = useState(new Date()); // Default is today's date
+  const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
-  const [isCategorySelected, setIsCategorySelected] = useState(false); // Track if category has been selected
+  const [isCategorySelected, setIsCategorySelected] = useState(false);
 
-  const handleAdd = async () => {
+  const navigation = useNavigation<NativeStackNavigationProp<ParamList>>();
+  const transactionContext = useContext(TransactionContext);
+
+  if (!transactionContext) {
+    throw new Error('TransactionContext must be used within a TransactionProvider');
+  }
+
+  const { addTransaction } = transactionContext;
+
+  const handleAdd = () => {
+    if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
+      // alert('Vui lòng nhập số tiền hợp lệ');
+      return;
+    }
+
     const newTransaction: Transaction = {
       id: uuid.v4().toString(),
       type,
@@ -38,12 +64,16 @@ const AddForm = ({type}: {type: 'income' | 'expense'}) => {
       note,
       date: date.toISOString(),
     };
-    const current = await getTransactions();
-    await saveTransactions([newTransaction, ...current]);
+
+    addTransaction(newTransaction);
+
+    // Reset form
     setAmount('');
     setNote('');
-    setCategory(type === 'income' ? 'Lương' : 'Ăn uống');
-    setIsCategorySelected(false); // Reset category selection status after adding transaction
+    setCategory(categoryList[type][0]);
+    setIsCategorySelected(false);
+
+    navigation.navigate('TransactionDetail', { transaction: newTransaction });
   };
 
   const handleDateChange = (event: any, selectedDate: Date | undefined) => {
@@ -52,14 +82,14 @@ const AddForm = ({type}: {type: 'income' | 'expense'}) => {
     setDate(currentDate);
   };
 
-  const handleCategorySelectFromSuggestion = (selectedCategory: string) => {
-    setCategory(selectedCategory); // Update category when selected from suggestion
+  const handleCategorySelectFromSuggestion = (selectedCategory: typeof category) => {
+    setCategory(selectedCategory);
   };
 
-  const handleCategorySelectFromPopup = (selectedCategory: string) => {
-    setCategory(selectedCategory); // Update category when selected from popup
-    setShowCategoryModal(false); // Close modal after selection
-    setIsCategorySelected(true); // Mark category as selected
+  const handleCategorySelectFromPopup = (selectedCategory: typeof category) => {
+    setCategory(selectedCategory);
+    setShowCategoryModal(false);
+    setIsCategorySelected(true);
   };
 
   return (
@@ -78,45 +108,42 @@ const AddForm = ({type}: {type: 'income' | 'expense'}) => {
         style={styles.input}
       />
 
-      {/* Danh mục đã chọn */}
       <TouchableOpacity
         style={styles.selectedCategoryContainer}
         onPress={() => setShowCategoryModal(true)}>
-        <Text style={styles.selectedCategoryText}>{category}</Text>
+        <Text style={styles.selectedCategoryText}>{category.text}</Text>
       </TouchableOpacity>
 
-      {/* Gợi ý danh mục chỉ hiển thị nếu chưa chọn danh mục */}
       {!isCategorySelected && (
         <View style={styles.suggestionContainer}>
-          {categoryList[type].map((item, index) => (
-            <TouchableOpacity
-              key={index}
-              style={[
-                styles.suggestionButton,
-                category === item && styles.selectedSuggestionButton,
-              ]}
-              onPress={() => handleCategorySelectFromSuggestion(item)} // Update category when a suggestion is clicked
-            >
-              <Text
+          {categoryList[type]
+            .filter(item => item.highlight)
+            .map(item => (
+              <TouchableOpacity
+                key={item.id}
                 style={[
-                  styles.suggestionText,
-                  category === item && styles.selectedSuggestionText,
-                ]}>
-                {item}
-              </Text>
-            </TouchableOpacity>
-          ))}
+                  styles.suggestionButton,
+                  category.text === item.text && styles.selectedSuggestionButton,
+                ]}
+                onPress={() => handleCategorySelectFromSuggestion(item)}>
+                <Text
+                  style={[
+                    styles.suggestionText,
+                    category.text === item.text && styles.selectedSuggestionText,
+                  ]}>
+                  {item.text}
+                </Text>
+              </TouchableOpacity>
+            ))}
         </View>
       )}
 
-      {/* Chọn ngày */}
       <TouchableOpacity
         style={styles.dateButton}
         onPress={() => setShowDatePicker(true)}>
         <Text style={styles.dateButtonText}>{date.toLocaleDateString()}</Text>
       </TouchableOpacity>
 
-      {/* Hiển thị DateTimePicker */}
       {showDatePicker && (
         <DateTimePicker
           value={date}
@@ -130,7 +157,6 @@ const AddForm = ({type}: {type: 'income' | 'expense'}) => {
         <Text style={styles.addButtonText}>Thêm giao dịch</Text>
       </TouchableOpacity>
 
-      {/* Modal chọn danh mục */}
       <Modal
         visible={showCategoryModal}
         animationType="slide"
@@ -140,12 +166,12 @@ const AddForm = ({type}: {type: 'income' | 'expense'}) => {
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Chọn danh mục</Text>
             <ScrollView>
-              {categoryList[type].map((item, index) => (
+              {categoryList[type].map(item => (
                 <TouchableOpacity
-                  key={index}
+                  key={item.id}
                   style={styles.modalButton}
                   onPress={() => handleCategorySelectFromPopup(item)}>
-                  <Text style={styles.modalButtonText}>{item}</Text>
+                  <Text style={styles.modalButtonText}>{item.text}</Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -162,38 +188,22 @@ const AddForm = ({type}: {type: 'income' | 'expense'}) => {
 };
 
 const AddTransactionScreen = () => {
-  const [selectedTab, setSelectedTab] = useState<'expense' | 'income'>(
-    'expense',
-  );
+  const [selectedTab, setSelectedTab] = useState<'expense' | 'income'>('expense');
 
   return (
     <ScrollView style={styles.screenContainer}>
       <View style={styles.tabBarContainer}>
         <TouchableOpacity
-          style={[
-            styles.tabButton,
-            selectedTab === 'expense' && styles.selectedTab,
-          ]}
+          style={[styles.tabButton, selectedTab === 'expense' && styles.selectedTab]}
           onPress={() => setSelectedTab('expense')}>
-          <Text
-            style={[
-              styles.tabButtonText,
-              selectedTab === 'expense' && styles.selectedTabText,
-            ]}>
+          <Text style={[styles.tabButtonText, selectedTab === 'expense' && styles.selectedTabText]}>
             Chi tiêu
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[
-            styles.tabButton,
-            selectedTab === 'income' && styles.selectedTab,
-          ]}
+          style={[styles.tabButton, selectedTab === 'income' && styles.selectedTab]}
           onPress={() => setSelectedTab('income')}>
-          <Text
-            style={[
-              styles.tabButtonText,
-              selectedTab === 'income' && styles.selectedTabText,
-            ]}>
+          <Text style={[styles.tabButtonText, selectedTab === 'income' && styles.selectedTabText]}>
             Thu nhập
           </Text>
         </TouchableOpacity>
@@ -206,7 +216,7 @@ const AddTransactionScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  screenContainer: {padding: 20, backgroundColor: '#f9f9f9'},
+  screenContainer: { padding: 20, backgroundColor: '#f9f9f9' },
   tabBarContainer: {
     flexDirection: 'row',
     marginBottom: 20,
@@ -230,7 +240,7 @@ const styles = StyleSheet.create({
   selectedTabText: {
     color: '#fff',
   },
-  formContainer: {backgroundColor: '#fff', padding: 20, borderRadius: 10},
+  formContainer: { backgroundColor: '#fff', padding: 20, borderRadius: 10 },
   input: {
     borderWidth: 1,
     padding: 12,
@@ -252,24 +262,17 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   suggestionContainer: {
-    flexDirection: 'row', // Các gợi ý nằm trên một dòng
-    flexWrap: 'wrap', // Các gợi ý sẽ xuống dòng khi không đủ không gian
-    marginBottom: 10, // Khoảng cách nhỏ giữa các phần tử
-    backgroundColor: '#fff',
-    // borderRadius: 8,
-    // shadowColor: '#000',
-    // shadowOpacity: 0.1,
-    // shadowRadius: 5,
-    // shadowOffset: { width: 0, height: 2 },
-    // elevation: 3,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 10,
   },
   suggestionButton: {
-    paddingVertical: 8, // Kích thước padding nhỏ hơn
-    paddingHorizontal: 12, // Giảm kích thước padding
+    paddingVertical: 8,
+    paddingHorizontal: 12,
     backgroundColor: '#f5f5f5',
     borderRadius: 5,
-    marginRight: 10, // Khoảng cách ngang giữa các gợi ý
-    marginBottom: 10, // Khoảng cách dọc giữa các gợi ý
+    marginRight: 10,
+    marginBottom: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -279,11 +282,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   selectedSuggestionButton: {
-    backgroundColor: '#6200EE', // Màu nền khi chọn
+    backgroundColor: '#6200EE',
     borderWidth: 1,
     borderColor: '#6200EE',
   },
-  selectedSuggestionText : {
+  selectedSuggestionText: {
     color: '#ffffff',
   },
   dateButton: {
@@ -307,46 +310,45 @@ const styles = StyleSheet.create({
   addButtonText: {
     color: '#fff',
     fontWeight: 'bold',
-    fontSize: 16,
+    fontSize: 18,
   },
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    paddingHorizontal: 30,
   },
   modalContent: {
     backgroundColor: '#fff',
-    width: '80%',
-    borderRadius: 10,
+    borderRadius: 12,
     padding: 20,
+    maxHeight: '80%',
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 15,
+    textAlign: 'center',
   },
   modalButton: {
-    padding: 12,
-    backgroundColor: '#f1f1f1',
-    borderRadius: 8,
-    marginVertical: 5,
-    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderColor: '#ddd',
   },
   modalButtonText: {
     fontSize: 16,
-    color: '#6200EE',
+    color: '#333',
   },
   closeButton: {
+    marginTop: 10,
     backgroundColor: '#6200EE',
-    padding: 10,
+    paddingVertical: 12,
     borderRadius: 8,
-    marginTop: 15,
     alignItems: 'center',
   },
   closeButtonText: {
     color: '#fff',
-    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 

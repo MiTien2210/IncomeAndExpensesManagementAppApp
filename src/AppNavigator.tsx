@@ -1,36 +1,34 @@
+// AppNavigator.tsx
 import React from 'react';
-import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import OverviewScreen from './screens/OverviewScreen';
-import TransactionListScreen from './screens/TransactionListScreen';
-import AddTransactionScreen from './screens/AddTransactionScreen';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import TabNavigator from './TabNavigator';
+import TransactionDetailScreen from './screens/TransactionDetailScreen';
+import TransactionListByCategoryScreen from './screens/TransactionListByCategoryScreen';
+import {ParamList} from './types/types';
+import EditTransactionScreen from './screens/EditTransactionScreen';
 
-const Tab = createBottomTabNavigator();
+const Stack = createNativeStackNavigator<ParamList>();
 
 const AppNavigator = () => (
-  <Tab.Navigator
-    screenOptions={({route}) => ({
-      headerShown: false,
-      tabBarIcon: ({color, size}) => {
-        let iconName = '';
+  <Stack.Navigator>
+    <Stack.Screen
+      name="Tabs"
+      component={TabNavigator}
+      options={{headerShown: false}}
+    />
+    <Stack.Screen
+      name="TransactionDetail"
+      component={TransactionDetailScreen}
+      options={{title: 'Chi tiết giao dịch'}}
+    />
+    <Stack.Screen
+      name="TransactionListByCategory"
+      component={TransactionListByCategoryScreen}
+      options={{title: 'Danh sách giao dịch'}}
+    />
 
-        if (route.name === 'Tổng quan') {
-          iconName = 'dashboard';
-        } else if (route.name === 'Sổ giao dịch') {
-          iconName = 'receipt';
-        } else if (route.name === 'Ghi chép giao dịch') {
-          iconName = 'add-circle-outline';
-        }
-
-        return <Icon name={iconName} size={size} color={color} />;
-      },
-      tabBarActiveTintColor: '#6200ee',
-      tabBarInactiveTintColor: 'gray',
-    })}>
-    <Tab.Screen name="Tổng quan" component={OverviewScreen} />
-    <Tab.Screen name="Sổ giao dịch" component={TransactionListScreen} />
-    <Tab.Screen name="Ghi chép giao dịch" component={AddTransactionScreen} />
-  </Tab.Navigator>
+    <Stack.Screen name="EditTransaction" component={EditTransactionScreen} />
+  </Stack.Navigator>
 );
 
 export default AppNavigator;
