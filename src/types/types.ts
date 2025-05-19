@@ -11,6 +11,7 @@ export interface Transaction {
 
 export type ParamList = {
   Tabs: undefined;
+  TransactionList: undefined;
   TransactionDetail: {transaction: Transaction};
   TransactionListByCategory: {
     categoryName: string;

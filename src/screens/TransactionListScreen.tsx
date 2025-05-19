@@ -4,9 +4,17 @@ import {TransactionContext} from '../context/TransactionContext';
 import TransactionItem from '../components/TransactionItem';
 import moment from 'moment';
 import {useNavigation} from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { ParamList } from '../types/types';
+
+type TransactionListScreenNavigationProp = NativeStackNavigationProp<
+  ParamList,
+  'TransactionList'
+>;
 
 const TransactionListScreen = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<TransactionListScreenNavigationProp>();
+
   const {transactions} = useContext(TransactionContext);
 
   const [selectedMonth, setSelectedMonth] = useState(
@@ -205,7 +213,10 @@ const TransactionListScreen = () => {
             //     transaction: item,
             //   })
             // }
-            >
+            onPress={() => {
+              console.log('item: ', item);
+              navigation.navigate('TransactionDetail', {transaction: item});
+            }}>
             <TransactionItem transaction={item} />
           </TouchableOpacity>
         )}

@@ -14,11 +14,12 @@ export default function TransactionListByCategoryScreen() {
   const { categoryName, type, isParent } = route.params;
 
   const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>([]);
-
+  
   useFocusEffect(
     React.useCallback(() => {
       const load = async () => {
         const data = await getTransactions();
+        console.log('data: ', data);
         const result = (data ?? []).filter((t: Transaction) => {
           const matchType = t.type === type;
           const matchCategory = isParent
@@ -31,13 +32,16 @@ export default function TransactionListByCategoryScreen() {
       load();
     }, [categoryName, type, isParent])
   );
+  console.log('filteredTransactions:: ',filteredTransactions )
 
   const renderItem = ({ item }: { item: Transaction }) => {
     const formattedDate = new Date(item.date).toLocaleDateString('vi-VN');
     return (
       <TouchableOpacity
         style={styles.itemContainer}
-        onPress={() => navigation.navigate('TransactionDetail', { transaction: item })}
+        onPress={() => {
+          console.log('item: ', item)
+          navigation.navigate('TransactionDetail', { transaction: item })}}
       >
         <View>
           <Text style={styles.amount}>
