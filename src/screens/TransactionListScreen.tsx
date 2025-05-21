@@ -6,6 +6,7 @@ import moment from 'moment';
 import {useNavigation} from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ParamList } from '../types/types';
+import { colors } from '../styles/styles';
 
 type TransactionListScreenNavigationProp = NativeStackNavigationProp<
   ParamList,
@@ -67,7 +68,7 @@ const TransactionListScreen = () => {
   }
 
   return (
-    <View style={{flex: 1, backgroundColor: '#fff'}}>
+    <View style={{flex: 1, backgroundColor: colors.background}}>
       {/* Header tổng quan thu chi */}
       <View style={styles.summaryContainer}>
         <Text style={styles.monthTitle}>
@@ -76,13 +77,13 @@ const TransactionListScreen = () => {
         <View style={styles.summaryRow}>
           <View style={styles.summaryBox}>
             <Text style={styles.summaryLabel}>Tổng Thu</Text>
-            <Text style={[styles.summaryValue, {color: 'green'}]}>
+            <Text style={[styles.summaryValue, {color: colors.income}]}>
               {totalIncome.toFixed(0)}
             </Text>
           </View>
           <View style={styles.summaryBox}>
             <Text style={styles.summaryLabel}>Tổng Chi</Text>
-            <Text style={[styles.summaryValue, {color: 'red'}]}>
+            <Text style={[styles.summaryValue, {color: colors.expense}]}>
               {totalExpense.toFixed(0)}
             </Text>
           </View>
@@ -91,7 +92,7 @@ const TransactionListScreen = () => {
             <Text
               style={[
                 styles.summaryValue,
-                {color: difference >= 0 ? 'green' : 'red'},
+                {color: difference >= 0 ? colors.income : colors.expense},
               ]}>
               {difference.toFixed(0)}
             </Text>
@@ -135,7 +136,6 @@ const TransactionListScreen = () => {
 
       {/* Calendar hiển thị ngày trong tháng */}
       <View style={styles.calendarContainer}>
-        {/* Header thứ */}
         <View style={styles.weekdayRow}>
           {['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'].map(day => (
             <Text key={day} style={styles.weekdayText}>
@@ -144,7 +144,6 @@ const TransactionListScreen = () => {
           ))}
         </View>
 
-        {/* Grid ngày */}
         <View style={styles.calendarGrid}>
           {calendarDays.map((date, index) => {
             if (!date) {
@@ -152,7 +151,6 @@ const TransactionListScreen = () => {
             }
             const isSelected = date === selectedDate;
 
-            // Tính tổng thu chi trong ngày
             const dayTransactions = transactions.filter(
               t => moment(t.date).format('YYYY-MM-DD') === date,
             );
@@ -169,7 +167,6 @@ const TransactionListScreen = () => {
                 style={[styles.dayCell, isSelected && styles.selectedDayCell]}
                 onPress={() => setSelectedDate(date)}
                 activeOpacity={0.7}>
-                {/* Ngày góc trên trái */}
                 <View style={styles.dayNumberContainer}>
                   <Text
                     style={[
@@ -180,7 +177,6 @@ const TransactionListScreen = () => {
                   </Text>
                 </View>
 
-                {/* Thu chi góc dưới phải */}
                 <View style={styles.incomeExpenseContainer}>
                   {dayIncome > 0 && (
                     <Text style={styles.incomeTextSmall}>
@@ -199,8 +195,7 @@ const TransactionListScreen = () => {
         </View>
       </View>
 
-      {/* Danh sách giao dịch ngày được chọn */}
-
+      {/* Danh sách giao dịch */}
       <FlatList
         data={transactionsInSelectedDate.sort((a, b) =>
           a.date < b.date ? 1 : -1,
@@ -208,13 +203,7 @@ const TransactionListScreen = () => {
         keyExtractor={item => item.id}
         renderItem={({item}) => (
           <TouchableOpacity
-            // onPress={() =>
-            //   navigation.navigate('TransactionDetailScreen', {
-            //     transaction: item,
-            //   })
-            // }
             onPress={() => {
-              console.log('item: ', item);
               navigation.navigate('TransactionDetail', {transaction: item});
             }}>
             <TransactionItem transaction={item} />
@@ -223,7 +212,9 @@ const TransactionListScreen = () => {
         contentContainerStyle={{paddingBottom: 100}}
         ListEmptyComponent={
           <View style={{padding: 20, alignItems: 'center'}}>
-            <Text>Không có giao dịch trong ngày này</Text>
+            <Text style={{color: colors.textSecondary}}>
+              Không có giao dịch trong ngày này
+            </Text>
           </View>
         }
       />
@@ -236,14 +227,15 @@ const CELL_SIZE = 48;
 const styles = StyleSheet.create({
   summaryContainer: {
     padding: 16,
-    backgroundColor: '#f9f9f9',
-    borderBottomColor: '#ddd',
+    backgroundColor: colors.surface,
+    borderBottomColor: colors.border,
     borderBottomWidth: 1,
   },
   monthTitle: {
     fontSize: 18,
     fontWeight: '700',
     marginBottom: 12,
+    color: colors.textPrimary,
   },
   summaryRow: {
     flexDirection: 'row',
@@ -255,7 +247,7 @@ const styles = StyleSheet.create({
   },
   summaryLabel: {
     fontSize: 14,
-    color: '#666',
+    color: colors.textSecondary,
     marginBottom: 4,
   },
   summaryValue: {
@@ -265,7 +257,7 @@ const styles = StyleSheet.create({
   monthPicker: {
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderColor: '#eee',
+    borderColor: colors.border,
   },
   monthItem: {
     paddingHorizontal: 16,
@@ -275,11 +267,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0f0f0',
   },
   monthItemSelected: {
-    backgroundColor: '#007aff',
+    backgroundColor: colors.primary,
   },
   monthItemText: {
     fontSize: 14,
-    color: '#555',
+    color: colors.textSecondary,
   },
   monthItemTextSelected: {
     color: '#fff',
@@ -297,7 +289,7 @@ const styles = StyleSheet.create({
     width: CELL_SIZE,
     textAlign: 'center',
     fontWeight: '600',
-    color: '#444',
+    color: colors.textPrimary,
   },
   calendarGrid: {
     flexDirection: 'row',
@@ -309,12 +301,12 @@ const styles = StyleSheet.create({
     height: CELL_SIZE,
     borderRadius: 8,
     margin: 2,
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     padding: 4,
     justifyContent: 'space-between',
   },
   selectedDayCell: {
-    backgroundColor: '#cce5ff', // xanh nhạt khi chọn
+    backgroundColor: colors.accent,
   },
   dayNumberContainer: {
     position: 'absolute',
@@ -324,10 +316,10 @@ const styles = StyleSheet.create({
   dayText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#222',
+    color: colors.textPrimary,
   },
   selectedDayText: {
-    color: '#004085',
+    color: colors.primary,
   },
   incomeExpenseContainer: {
     position: 'absolute',
@@ -336,13 +328,13 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   incomeTextSmall: {
-    color: '#1E7E34',
+    color: colors.income,
     fontSize: 9,
     fontWeight: '700',
     lineHeight: 12,
   },
   expenseTextSmall: {
-    color: '#D93025',
+    color: colors.expense,
     fontSize: 9,
     fontWeight: '700',
     lineHeight: 12,

@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, {useState, useContext} from 'react';
 import {
   View,
   TextInput,
@@ -7,32 +7,106 @@ import {
   Text,
   ScrollView,
   Modal,
+  Alert,
 } from 'react-native';
-import { Transaction } from '../types/types';
+import {Transaction} from '../types/types';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import uuid from 'react-native-uuid';
-import { useNavigation } from '@react-navigation/native';
-import { ParamList } from '../types/types';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { TransactionContext } from '../context/TransactionContext'; // Đường dẫn thay thế theo dự án của bạn
+import {useNavigation} from '@react-navigation/native';
+import {ParamList} from '../types/types';
+import {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import {TransactionContext} from '../context/TransactionContext';
+import {colors} from '../styles/styles';
 
 const categoryList = {
   income: [
-    { id: 1, text: 'Lương', type: 'other', highlight: true, color: 'pink', typeColor: 'blue' },
-    { id: 2, text: 'Thưởng', type: 'other', highlight: true, color: 'blue', typeColor: 'blue' },
-    { id: 3, text: 'Khác', type: 'other', highlight: true, color: 'yellow', typeColor: 'blue' },
+    {
+      id: 1,
+      text: 'Lương',
+      type: 'other',
+      highlight: true,
+      color: 'pink',
+      typeColor: 'blue',
+      emoji: '💰',
+    },
+    {
+      id: 2,
+      text: 'Thưởng',
+      type: 'other',
+      highlight: true,
+      color: 'blue',
+      typeColor: 'blue',
+      emoji: '🎁',
+    },
+    {
+      id: 3,
+      text: 'Khác',
+      type: 'other',
+      highlight: true,
+      color: 'yellow',
+      typeColor: 'blue',
+      emoji: '⋯',
+    },
   ],
   expense: [
-    { id: 1, text: 'Ăn uống', type: 'Chi tiêu - Sinh hoạt', highlight: true, color: 'blue', typeColor: 'blue' },
-    { id: 2, text: 'Mua sắm', type: 'Chi phí phát sinh', highlight: true, color: 'red', typeColor: 'green' },
-    { id: 3, text: 'Đi lại', type: 'Chi tiêu - Sinh hoạt', highlight: true, color: 'pink', typeColor: 'blue' },
-    { id: 4, text: 'Chợ - Siêu thị', type: 'Chi tiêu - Sinh hoạt', highlight: false, color: 'orange', typeColor: 'blue' },
-    { id: 5, text: 'Hóa đơn', type: 'Chi tiêu - Sinh hoạt', highlight: true, color: 'yellow', typeColor: 'blue' },
-    { id: 6, text: 'Khác', type: 'other', highlight: true, color: 'green', typeColor: 'yellow' },
+    {
+      id: 1,
+      text: 'Ăn uống',
+      type: 'Chi tiêu - Sinh hoạt',
+      highlight: true,
+      color: 'blue',
+      typeColor: 'blue',
+      emoji: '🍽️',
+    },
+    {
+      id: 2,
+      text: 'Mua sắm',
+      type: 'Chi phí phát sinh',
+      highlight: true,
+      color: 'red',
+      typeColor: 'green',
+      emoji: '🛒',
+    },
+    {
+      id: 3,
+      text: 'Đi lại',
+      type: 'Chi tiêu - Sinh hoạt',
+      highlight: true,
+      color: 'pink',
+      typeColor: 'blue',
+      emoji: '🚗',
+    },
+    {
+      id: 4,
+      text: 'Chợ - Siêu thị',
+      type: 'Chi tiêu - Sinh hoạt',
+      highlight: false,
+      color: 'orange',
+      typeColor: 'blue',
+      emoji: '🏬',
+    },
+    {
+      id: 5,
+      text: 'Hóa đơn',
+      type: 'Chi tiêu - Sinh hoạt',
+      highlight: true,
+      color: 'yellow',
+      typeColor: 'blue',
+      emoji: '🧾',
+    },
+    {
+      id: 6,
+      text: 'Khác',
+      type: 'other',
+      highlight: true,
+      color: 'green',
+      typeColor: 'yellow',
+      emoji: '⋯',
+    },
   ],
 };
 
-const AddForm = ({ type }: { type: 'income' | 'expense' }) => {
+const AddForm = ({type}: {type: 'income' | 'expense'}) => {
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState(categoryList[type][0]);
   const [note, setNote] = useState('');
@@ -45,14 +119,26 @@ const AddForm = ({ type }: { type: 'income' | 'expense' }) => {
   const transactionContext = useContext(TransactionContext);
 
   if (!transactionContext) {
-    throw new Error('TransactionContext must be used within a TransactionProvider');
+    throw new Error(
+      'TransactionContext must be used within a TransactionProvider',
+    );
   }
 
-  const { addTransaction } = transactionContext;
+  const {addTransaction} = transactionContext;
 
   const handleAdd = () => {
-    if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
-      // alert('Vui lòng nhập số tiền hợp lệ');
+    if (!amount) {
+      Alert.alert('Thông báo', 'Bạn chưa nhập số tiền.');
+      return;
+    }
+
+    if (isNaN(Number(amount)) || Number(amount) <= 0) {
+      Alert.alert('Lỗi', 'Vui lòng nhập số tiền hợp lệ lớn hơn 0.');
+      return;
+    }
+
+    if (!note.trim()) {
+      Alert.alert('Thông báo', 'Bạn chưa nhập ghi chú.');
       return;
     }
 
@@ -73,7 +159,7 @@ const AddForm = ({ type }: { type: 'income' | 'expense' }) => {
     setCategory(categoryList[type][0]);
     setIsCategorySelected(false);
 
-    navigation.navigate('TransactionDetail', { transaction: newTransaction });
+    navigation.navigate('TransactionDetail', {transaction: newTransaction});
   };
 
   const handleDateChange = (event: any, selectedDate: Date | undefined) => {
@@ -82,7 +168,9 @@ const AddForm = ({ type }: { type: 'income' | 'expense' }) => {
     setDate(currentDate);
   };
 
-  const handleCategorySelectFromSuggestion = (selectedCategory: typeof category) => {
+  const handleCategorySelectFromSuggestion = (
+    selectedCategory: typeof category,
+  ) => {
     setCategory(selectedCategory);
   };
 
@@ -109,8 +197,15 @@ const AddForm = ({ type }: { type: 'income' | 'expense' }) => {
       />
 
       <TouchableOpacity
-        style={styles.selectedCategoryContainer}
+        style={[
+          styles.selectedCategoryContainer,
+          {backgroundColor: colors.background},
+        ]}
         onPress={() => setShowCategoryModal(true)}>
+        <Text
+          style={[styles.emojiIcon, {color: category.color, marginRight: 8}]}>
+          {category.emoji}
+        </Text>
         <Text style={styles.selectedCategoryText}>{category.text}</Text>
       </TouchableOpacity>
 
@@ -123,13 +218,22 @@ const AddForm = ({ type }: { type: 'income' | 'expense' }) => {
                 key={item.id}
                 style={[
                   styles.suggestionButton,
-                  category.text === item.text && styles.selectedSuggestionButton,
+                  category.text === item.text &&
+                    styles.selectedSuggestionButton,
                 ]}
                 onPress={() => handleCategorySelectFromSuggestion(item)}>
                 <Text
                   style={[
+                    styles.emojiIcon,
+                    {color: item.color, marginRight: 6},
+                  ]}>
+                  {item.emoji}
+                </Text>
+                <Text
+                  style={[
                     styles.suggestionText,
-                    category.text === item.text && styles.selectedSuggestionText,
+                    category.text === item.text &&
+                      styles.selectedSuggestionText,
                   ]}>
                   {item.text}
                 </Text>
@@ -141,6 +245,10 @@ const AddForm = ({ type }: { type: 'income' | 'expense' }) => {
       <TouchableOpacity
         style={styles.dateButton}
         onPress={() => setShowDatePicker(true)}>
+        <Text
+          style={[styles.emojiIcon, {color: colors.surface, marginRight: 8}]}>
+          📅
+        </Text>
         <Text style={styles.dateButtonText}>{date.toLocaleDateString()}</Text>
       </TouchableOpacity>
 
@@ -154,6 +262,10 @@ const AddForm = ({ type }: { type: 'income' | 'expense' }) => {
       )}
 
       <TouchableOpacity style={styles.addButton} onPress={handleAdd}>
+        <Text
+          style={[styles.emojiIcon, {color: colors.surface, marginRight: 8}]}>
+          ➕
+        </Text>
         <Text style={styles.addButtonText}>Thêm giao dịch</Text>
       </TouchableOpacity>
 
@@ -171,6 +283,13 @@ const AddForm = ({ type }: { type: 'income' | 'expense' }) => {
                   key={item.id}
                   style={styles.modalButton}
                   onPress={() => handleCategorySelectFromPopup(item)}>
+                  <Text
+                    style={[
+                      styles.emojiIcon,
+                      {color: item.color, marginRight: 10},
+                    ]}>
+                    {item.emoji}
+                  </Text>
                   <Text style={styles.modalButtonText}>{item.text}</Text>
                 </TouchableOpacity>
               ))}
@@ -188,22 +307,85 @@ const AddForm = ({ type }: { type: 'income' | 'expense' }) => {
 };
 
 const AddTransactionScreen = () => {
-  const [selectedTab, setSelectedTab] = useState<'expense' | 'income'>('expense');
+  const [selectedTab, setSelectedTab] = useState<'expense' | 'income'>(
+    'expense',
+  );
 
   return (
     <ScrollView style={styles.screenContainer}>
       <View style={styles.tabBarContainer}>
         <TouchableOpacity
-          style={[styles.tabButton, selectedTab === 'expense' && styles.selectedTab]}
+          style={[
+            styles.tabButton,
+            {
+              borderColor: colors.expense,
+              marginHorizontal: 8,
+              paddingVertical: 8,
+              paddingHorizontal: 16,
+              backgroundColor:
+                selectedTab === 'expense' ? colors.expenseLight : 'white', // ✅
+            },
+          ]}
           onPress={() => setSelectedTab('expense')}>
-          <Text style={[styles.tabButtonText, selectedTab === 'expense' && styles.selectedTabText]}>
+          <Text
+            style={[
+              styles.emojiIcon,
+              {
+                marginRight: 6,
+                fontSize: 18,
+                color: colors.expense, // ✅ đơn giản hoá
+              },
+            ]}>
+            💸
+          </Text>
+          <Text
+            style={[
+              styles.buttonText,
+              {
+                fontSize: 14,
+                color:
+                  selectedTab === 'expense'
+                    ? colors.textPrimary
+                    : colors.textPrimary,
+              },
+            ]}>
             Chi tiêu
           </Text>
         </TouchableOpacity>
+
         <TouchableOpacity
-          style={[styles.tabButton, selectedTab === 'income' && styles.selectedTab]}
+          style={[
+            styles.tabButton,
+            {
+              borderColor: colors.income,
+              marginHorizontal: 8,
+              paddingVertical: 8,
+              paddingHorizontal: 16,
+              backgroundColor:
+                selectedTab === 'income' ? colors.incomeLight : 'white', // ✅
+            },
+          ]}
           onPress={() => setSelectedTab('income')}>
-          <Text style={[styles.tabButtonText, selectedTab === 'income' && styles.selectedTabText]}>
+          <Text
+            style={[
+              styles.emojiIcon,
+              {
+                marginRight: 6,
+                fontSize: 18,
+                color: colors.income, // ✅ đơn giản hoá
+              },
+            ]}>
+            💵
+          </Text>
+          <Text
+            style={[
+              styles.buttonText,
+              {
+                fontSize: 14,
+                color:
+                  selectedTab === 'income' ? colors.textPrimary : colors.textPrimary,
+              },
+            ]}>
             Thu nhập
           </Text>
         </TouchableOpacity>
@@ -216,139 +398,157 @@ const AddTransactionScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  screenContainer: { padding: 20, backgroundColor: '#f9f9f9' },
+  screenContainer: {
+    padding: 20,
+    backgroundColor: colors.background,
+  },
   tabBarContainer: {
     flexDirection: 'row',
-    marginBottom: 20,
-    justifyContent: 'space-between',
+    marginBottom: 15,
+    justifyContent: 'center',
   },
   tabButton: {
-    padding: 10,
-    borderRadius: 8,
-    backgroundColor: '#ddd',
     flex: 1,
+    borderWidth: 2,
+    borderRadius: 12,
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
+    minWidth: 120,
   },
-  selectedTab: {
-    backgroundColor: '#6200EE',
+  buttonText: {
+    fontWeight: '500',
+    color: colors.textPrimary,
   },
-  tabButtonText: {
-    fontWeight: 'bold',
-    fontSize: 16,
-    color: '#333',
+  formContainer: {
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 50,
   },
-  selectedTabText: {
-    color: '#fff',
-  },
-  formContainer: { backgroundColor: '#fff', padding: 20, borderRadius: 10 },
   input: {
-    borderWidth: 1,
-    padding: 12,
-    marginBottom: 15,
+    backgroundColor: colors.background,
     borderRadius: 8,
-    borderColor: '#ddd',
-    backgroundColor: '#fff',
+    padding: 10,
+    marginBottom: 15,
     fontSize: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   selectedCategoryContainer: {
-    marginBottom: 15,
-    backgroundColor: '#f1f1f1',
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
     padding: 12,
-    borderRadius: 8,
+    marginBottom: 15,
+  },
+  emojiIcon: {
+    fontSize: 20,
   },
   selectedCategoryText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
+    fontSize: 16,
+    color: colors.textPrimary,
   },
   suggestionContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginBottom: 10,
+    marginBottom: 15,
   },
   suggestionButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    backgroundColor: '#f5f5f5',
-    borderRadius: 5,
-    marginRight: 10,
-    marginBottom: 10,
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: colors.background,
+    borderRadius: 16,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    marginRight: 8,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  selectedSuggestionButton: {
+    borderColor: colors.accent,
+    backgroundColor: colors.accent + '33', // màu accent với alpha mờ
   },
   suggestionText: {
     fontSize: 14,
-    color: '#333',
-    fontWeight: '600',
-  },
-  selectedSuggestionButton: {
-    backgroundColor: '#6200EE',
-    borderWidth: 1,
-    borderColor: '#6200EE',
+    color: colors.textSecondary,
+    fontWeight: '700',
   },
   selectedSuggestionText: {
-    color: '#ffffff',
+    color: colors.accent,
+    fontWeight: '600',
   },
-  dateButton: {
-    backgroundColor: '#f1f1f1',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    marginBottom: 15,
+    dateButton: {
+    flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: colors.accent,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    marginBottom: 15,
   },
   dateButtonText: {
+    color: colors.surface,
     fontSize: 16,
-    color: '#333',
   },
   addButton: {
-    backgroundColor: '#6200EE',
-    padding: 15,
-    borderRadius: 8,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primary,
+    paddingVertical: 14,
+    borderRadius: 12,
+    marginBottom: 15,
   },
   addButtonText: {
-    color: '#fff',
+    color: colors.surface,
+    fontSize: 16,
     fontWeight: 'bold',
-    fontSize: 18,
   },
   modalContainer: {
     flex: 1,
-    justifyContent: 'center',
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    paddingHorizontal: 30,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.4)',
   },
   modalContent: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
     padding: 20,
     maxHeight: '80%',
   },
   modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 15,
-    textAlign: 'center',
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.textPrimary,
+    marginBottom: 10,
   },
   modalButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingVertical: 12,
+    paddingHorizontal: 10,
     borderBottomWidth: 1,
-    borderColor: '#ddd',
+    borderBottomColor: colors.border,
   },
   modalButtonText: {
     fontSize: 16,
-    color: '#333',
+    color: colors.textPrimary,
   },
   closeButton: {
     marginTop: 10,
-    backgroundColor: '#6200EE',
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
+    alignSelf: 'center',
+    backgroundColor: colors.warning,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 10,
   },
   closeButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
+    color: colors.textPrimary,
+    fontWeight: '500',
   },
 });
 

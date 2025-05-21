@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  Button,
   Dimensions,
   FlatList,
   TouchableOpacity,
@@ -11,8 +10,9 @@ import {
 import {useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {ParamList, Transaction} from '../types/types';
-import {TransactionContext} from '../context/TransactionContext'; // Context lấy transactions
+import {TransactionContext} from '../context/TransactionContext';
 import {PieChart} from 'react-native-chart-kit';
+import { colors } from '../styles/styles';
 
 type NavigationProp = NativeStackNavigationProp<ParamList, 'Tabs'>;
 
@@ -28,17 +28,12 @@ interface CategoryData {
 
 const OverviewScreen = () => {
   const {transactions} = useContext(TransactionContext);
-  console.log("transactions:::",transactions);
-  
-
-
   const [chartData, setChartData] = useState<CategoryData[]>([]);
-  const [showIncomeChart, setShowIncomeChart] = useState(false); // false = chi tiêu, true = thu nhập
-  const [useParentCategory, setUseParentCategory] = useState(false); // false = danh mục con, true = danh mục cha
+  const [showIncomeChart, setShowIncomeChart] = useState(false);
+  const [useParentCategory, setUseParentCategory] = useState(false);
 
   const navigation = useNavigation<NavigationProp>();
 
-  // Hàm sinh màu ngẫu nhiên nếu category không có màu
   const getRandomColor = () => {
     const letters = '0123456789ABCDEF';
     let color = '#';
@@ -48,17 +43,14 @@ const OverviewScreen = () => {
     return color;
   };
 
-  // Tính dữ liệu chart tổng hợp theo loại (income/expense) và danh mục (con/cha)
   const calculateChartData = (
     transactions: Transaction[],
     type: 'income' | 'expense',
   ): CategoryData[] => {
     const filtered = transactions.filter(t => t.type === type);
-
     const sums: {[key: string]: {amount: number; color: string}} = {};
 
     filtered.forEach(item => {
-      // lấy key và color dựa trên useParentCategory (giá trị từ ngoài hàm)
       const key = useParentCategory ? item.category.type : item.category.text;
       const color = useParentCategory
         ? item.category.typeColor
@@ -77,12 +69,11 @@ const OverviewScreen = () => {
       name: k,
       amount: sums[k].amount,
       color: sums[k].color,
-      legendFontColor: '#7F7F7F',
+      legendFontColor: colors.textSecondary,
       legendFontSize: 15,
     }));
   };
 
-  // Cập nhật chartData khi transactions hoặc các option thay đổi
   useEffect(() => {
     const type = showIncomeChart ? 'income' : 'expense';
     const data = calculateChartData(transactions, type);
@@ -91,7 +82,6 @@ const OverviewScreen = () => {
 
   const totalAmount = chartData.reduce((acc, item) => acc + item.amount, 0);
 
-  // Khi nhấn vào danh mục, chuyển màn hình hiển thị chi tiết
   const handleCategoryPress = (categoryName: string) => {
     navigation.navigate('TransactionListByCategory', {
       categoryName,
@@ -104,28 +94,44 @@ const OverviewScreen = () => {
     <View style={styles.container}>
       {/* Nút chọn Chi tiêu / Thu nhập */}
       <View style={styles.buttonContainer}>
-        <Button
-          title="Chi Tiêu"
-          onPress={() => setShowIncomeChart(false)}
-          color={showIncomeChart ? 'gray' : '#6200ee'}
-        />
-        <Button
-          title="Thu Nhập"
-          onPress={() => setShowIncomeChart(true)}
-          color={showIncomeChart ? '#6200ee' : 'gray'}
-        />
+        <TouchableOpacity
+          style={[
+            styles.button,
+            {
+              borderColor: colors.expense,
+              backgroundColor: !showIncomeChart
+                ? colors.expenseLight
+                : colors.surface,
+            },
+          ]}
+          onPress={() => setShowIncomeChart(false)}>
+          <Text style={styles.buttonText}>💸 Chi tiêu</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.button,
+            {
+              borderColor: colors.income,
+              backgroundColor: showIncomeChart
+                ? colors.incomeLight
+                : colors.surface,
+            },
+          ]}
+          onPress={() => setShowIncomeChart(true)}>
+          <Text style={styles.buttonText}>💵 Thu nhập</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Tổng số tiền */}
       <View style={styles.summaryContainer}>
-        <Text style={styles.text}>
+        <Text style={styles.totalText}>
           Tổng {showIncomeChart ? 'thu nhập' : 'chi tiêu'}: {totalAmount}₫
         </Text>
       </View>
 
       {/* Tiêu đề biểu đồ */}
       <Text style={styles.header}>
-        Biểu đồ {showIncomeChart ? 'thu nhập' : 'chi tiêu'} theo{' '}
+        📊 Biểu đồ {showIncomeChart ? 'thu nhập' : 'chi tiêu'} theo{' '}
         {useParentCategory ? 'danh mục cha' : 'danh mục con'}
       </Text>
 
@@ -152,22 +158,38 @@ const OverviewScreen = () => {
         <Text style={styles.text}>Không có dữ liệu</Text>
       )}
 
-      {/* Nút chuyển danh mục con / cha */}
+      {/* Nút chuyển danh mục */}
       <View style={styles.buttonContainer}>
-        <Button
-          title="Danh mục con"
-          onPress={() => setUseParentCategory(false)}
-          color={useParentCategory ? 'gray' : '#009688'}
-        />
-        <Button
-          title="Danh mục cha"
-          onPress={() => setUseParentCategory(true)}
-          color={useParentCategory ? '#009688' : 'gray'}
-        />
+        <TouchableOpacity
+          style={[
+            styles.smallButton,
+            {
+              borderColor: colors.primary,
+              backgroundColor: !useParentCategory
+                ? colors.accent
+                : colors.surface,
+            },
+          ]}
+          onPress={() => setUseParentCategory(false)}>
+          <Text style={styles.smallButtonText}>📂 Danh mục con</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.smallButton,
+            {
+              borderColor: colors.primary,
+              backgroundColor: useParentCategory
+                ? colors.accent
+                : colors.surface,
+            },
+          ]}
+          onPress={() => setUseParentCategory(true)}>
+          <Text style={styles.smallButtonText}>🗂️ Danh mục cha</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Danh sách danh mục */}
-      <Text style={styles.listHeader}>Chi tiết danh mục:</Text>
+      <Text style={styles.listHeader}>📑 Chi tiết danh mục:</Text>
       <FlatList
         data={chartData}
         keyExtractor={(item, index) => index.toString()}
@@ -188,31 +210,96 @@ const OverviewScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {flex: 1, padding: 20, backgroundColor: '#fff'},
-  header: {fontSize: 20, fontWeight: '600', marginVertical: 16},
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: colors.background,
+  },
+  header: {
+    fontSize: 20,
+    fontWeight: '600',
+    marginVertical: 16,
+    color: colors.textPrimary,
+  },
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginBottom: 12,
+    marginVertical: 10,
   },
-  summaryContainer: {marginTop: 20},
-  text: {fontSize: 16, marginVertical: 4},
-  listHeader: {marginTop: 16, fontSize: 18, fontWeight: '500'},
+  button: {
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderWidth: 2,
+    borderRadius: 12,
+    minWidth: 140,
+    alignItems: 'center',
+  },
+  buttonText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: colors.textPrimary,
+  },
+  smallButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderWidth: 1.5,
+    borderRadius: 10,
+    minWidth: 120,
+    alignItems: 'center',
+  },
+  smallButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.textPrimary,
+  },
+  summaryContainer: {
+    marginTop: 10,
+    marginBottom: 10,
+  },
+  totalText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.textPrimary,
+  },
+  text: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    marginVertical: 10,
+    textAlign: 'center',
+  },
+  listHeader: {
+    marginTop: 16,
+    fontSize: 18,
+    fontWeight: '500',
+    color: colors.textPrimary,
+  },
   listItem: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 10,
-    borderBottomColor: '#ddd',
+    borderBottomColor: colors.border,
     borderBottomWidth: 1,
   },
-  colorBox: {width: 16, height: 16, borderRadius: 4, marginRight: 12},
+  colorBox: {
+    width: 16,
+    height: 16,
+    borderRadius: 4,
+    marginRight: 12,
+  },
   listItemText: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     flex: 1,
   },
-  categoryName: {fontSize: 16},
-  amountText: {fontSize: 16, fontWeight: 'bold'},
+  categoryName: {
+    fontSize: 16,
+    color: colors.textPrimary,
+  },
+  amountText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.textPrimary,
+  },
 });
 
 export default OverviewScreen;
