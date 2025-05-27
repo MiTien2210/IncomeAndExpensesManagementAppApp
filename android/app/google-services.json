@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "785679025213",
+    "project_id": "manageexpenseapp",
+    "storage_bucket": "manageexpenseapp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:785679025213:android:e9725135d183f5910b1654",
+        "android_client_info": {
+          "package_name": "com.manageexpenseapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDLwEezg04CGUY3_re_1YH1JotYCiPfYtc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
